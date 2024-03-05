@@ -1,73 +1,65 @@
 import requests
 from bs4 import BeautifulSoup
+import json
 
-print("------------------------------------------------------------------\n")
+def generate_flutter_code_from_figma(figma_token, file_id, frame_id):
+    url = f'https://api.figma.com/v1/files/{file_id}/nodes?ids={frame_id}'
+    headers = {'X-Figma-Token': figma_token}
+    response = requests.get(url, headers=headers)
+    data = response.json()
 
-nameprogram = "CSM Dart"
-version = "1.0.0"
-devdate = "04 May 2024"
-devby = "Ananda Rauf Maududi"
-print(nameprogram)
-print(version)
-print(devdate)
-print(devby)
-print("------------------------------------------------------------------\n")
+    flutter_code = ''
+    for node_id, node_data in data['nodes'].items():
+        if node_data['type'] == 'TEXT':
+            flutter_code += f'Text("{node_data["characters"]}", style: TextStyle(fontSize: {node_data["fontSize"]})),\n'
 
+    with open('figma_to_flutter.dart', 'w') as file:
+        file.write(flutter_code)
 
-def MenuCMU():
+def generate_flutter_code_from_dribbble(dribbble_url):
+    response = requests.get(dribbble_url)
+    soup = BeautifulSoup(response.content, 'html.parser')
+
+    flutter_code = ''
+    for text_element in soup.find_all(class_='shot-description-text'):
+        flutter_code += f'Text("{text_element.text.strip()}", style: TextStyle(fontSize: 16)),\n'
+
+    with open('dribbble_to_flutter.dart', 'w') as file:
+        file.write(flutter_code)
+
+def main():
+    print("------------------------------------------------------------------\n")
+    nameprogram = "CMU Dart"
+    version = "1.0.0"
+    devdate = "04 May 2024"
+    devby = "Ananda Rauf Maududi"
+    print(nameprogram)
+    print(version)
+    print(devdate)
+    print(devby)
+    print("------------------------------------------------------------------\n")
+
     print("Menu CMU Dart:\n")
-    print()
     print("1. Convert Figma to Dart")
     print("2. Convert Dribbble to Dart")
 
+    pilih = int(input("Pilih nomor menu: "))
 
-def FigmaToDart():
-    # Masukkan token dan file id Figma Anda di sini
-    file_id = 'YOUR_FIGMA_FILE_ID'
-    access_token = 'YOUR_FIGMA_ACCESS_TOKEN'
+    if pilih == 1:
+        figma_token = 'YOUR_FIGMA_TOKEN'
+        file_id = 'YOUR_FIGMA_FILE_ID'
+        frame_id = 'YOUR_FIGMA_FRAME_ID'
+        generate_flutter_code_from_figma(figma_token, file_id, frame_id)
+        print("File Figma telah berhasil dikonversi ke kode Flutter (figma_to_flutter.dart)")
 
-    # Endpoint untuk mengambil informasi tentang desain UI dari Figma
-    url = f"https://api.figma.com/v1/files/{file_id}"
+    elif pilih == 2:
+        dribbble_url = 'https://dribbble.com/shots/15939921-Login-Page-UI-Design'
+        generate_flutter_code_from_dribbble(dribbble_url)
+        print("File Dribbble telah berhasil dikonversi ke kode Flutter (dribbble_to_flutter.dart)")
 
-    # Mengirimkan request ke API Figma
-    response = requests.get(url, headers={'X-Figma-Token': access_token})
+    else:
+        print("Menu tidak tersedia!")
+        exit()
 
-    # Mengambil data desain UI dari response
-    ui_data = response.json()
-    print("Berhasil convert dari Figma ke kode Dart!")
-    print(ui_data)
-
-
-def DribleToDart():
-    # URL halaman Dribbble yang berisi desain UI
-    url = 'https://dribbble.com/shots/12345678'
-
-    # Mengirimkan request ke halaman Dribbble
-    response = requests.get(url)
-
-    # Mengambil HTML halaman
-    html = response.text
-
-    # Membuat objek BeautifulSoup
-    soup = BeautifulSoup(html, 'html.parser')
-
-    # Mengambil informasi desain dari halaman menggunakan BeautifulSoup
-    # Anda perlu menyesuaikan ini sesuai dengan struktur HTML dari halaman Dribbble
-    # Misalnya, untuk mengambil judul desain:
-    title = soup.find('h1', class_='shot-title').text
-    print("Berhasil convert dari Dribble ke kode Dart!", title)
-
-
-MenuCMU()
-
-pilih = int(input("Pilih nomor menu: "))
-
-if pilih == 1:
-    FigmaToDart()
-
-elif pilih == 2:
-    DribleToDart()
-
-else:
-    print("Menu tidak tersedia!")
-    exit()
+if __name__ == "__main__":
+    main()
